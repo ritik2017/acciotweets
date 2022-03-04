@@ -114,6 +114,13 @@ authRouter.post('/logout', (req, res) => {
 
 module.exports = authRouter;
 
+// verify_email -> email link http://localhost:3000/verify_email/145dyucncosod
+// forgot_password 
+/**
+ * 1. email the password, reset password
+ * 2. email link enter his new password http://localhost:3000/reset_password/ydtudinmvmiu1763
+ */
+
 // LIMIT - how many number of entries - 1
 // Offset - how many entries you want to skip - 1
 
