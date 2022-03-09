@@ -9,6 +9,7 @@ const constants = require('./private_constants');
 // Controllers
 const AuthRouter = require('./Controllers/Auth');
 const TweetsRouter = require('./Controllers/Tweets');
+const FollowRouter = require('./Controllers/Follow');
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.use(session({
 // Controllers
 app.use('/auth', AuthRouter);
 app.use('/tweets', TweetsRouter);
+app.use('/follow', FollowRouter);
 
 app.get('/', (req, res) => {
     res.send({

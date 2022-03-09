@@ -1,16 +1,12 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const TweetsSchema = new Schema({
-    title: {
-        type: String,
+const FollowSchema = new Schema({
+    followingUserId: {
+        type: Schema.Types.ObjectId,
         required: true
     },
-    bodyText: {
-        type: String,
-        required: true
-    },
-    userId: {
+    followerUserId: {
         type: Schema.Types.ObjectId,
         required: true
     },
@@ -18,6 +14,6 @@ const TweetsSchema = new Schema({
         type: String,
         required: true
     }
-}, {strict: false})
+})
 
-module.exports = mongoose.model('tb_tweets', TweetsSchema, 'tb_tweets');
+module.exports = mongoose.model('tb_follow', FollowSchema);

@@ -43,7 +43,7 @@ class Tweets {
     editTweet() {
         return new Promise(async (resolve, reject) => {
 
-            let newTweetData = {};
+            const newTweetData = {};
             if(this.title) {
                 newTweetData.title = this.title;
             }
@@ -57,6 +57,19 @@ class Tweets {
             }
             catch(err) {
                 return reject(err);
+            }
+        })
+    }
+
+    deleteTweet() {
+        return new Promise(async (resolve, reject) => {
+            
+            try {
+                const tweetData = await TweetsSchema.findOneAndDelete({_id: this.tweetId});
+                resolve(tweetData);
+            }
+            catch(err) {
+                reject(err);
             }
         })
     }

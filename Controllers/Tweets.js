@@ -2,11 +2,12 @@ const express = require('express');
 const tweetsRouter = express.Router();
 
 const Tweets = require('../Models/Tweets');
+const { isAuth } = require('../Utils/Auth');
 
-tweetsRouter.post('/create-tweet',async (req, res) => {
+tweetsRouter.post('/create-tweet',isAuth, async (req, res) => {
 
     const { title, bodyText } = req.body;
-    const { userId } = req.body // req.session.user;
+    const { userId } = req.session.user;
 
     if(!title || !bodyText) {
         return res.send({
@@ -81,7 +82,7 @@ tweetsRouter.get('/get-tweets', async (req, res) => {
 })
 
 
-tweetsRouter.get('/get-my-tweets', async (req, res) => {
+tweetsRouter.get('/get-my-tweets', isAuth, async (req, res) => {
 
     const offset = req.query.offset || 0;
     const userId = req.session.user.userId;
@@ -104,11 +105,17 @@ tweetsRouter.get('/get-my-tweets', async (req, res) => {
     }
 })
 
-tweetsRouter.post('/edit-tweet', async (req, res) => {
+tweetsRouter.post('/edit-tweet', isAuth, async (req, res) => {
 
-    const { title, bodyText } = req.body.data;
-    const tweetId = req.body;
-    const userId = req.session.user.userId;
+    if(!req.body.tweetId || !req.body.data) {
+        return res.send({
+            status: 500,
+            message: "Parameters Missing"
+        })
+    }
+
+    const { tweetId, data: {title, bodyText} } = req.body;
+    const { userId } = req.session.user;
 
     if(!title && !bodyText) {
         return res.send({
@@ -118,10 +125,17 @@ tweetsRouter.post('/edit-tweet', async (req, res) => {
         })
     }
 
-    if(typeof(title) !== 'string' || typeof(bodyText) !== 'string') {
+    if(title && typeof(title) !== 'string') {
         return res.send({
             status: 400,
-            message: "Title and BodyText should be only text"
+            message: "Title should be only text"
+        })
+    }
+
+    if(bodyText && typeof(bodyText) !== 'string') {
+        return res.send({
+            status: 400,
+            message: "Bodytext should be only text"
         })
     }
 
@@ -135,9 +149,9 @@ tweetsRouter.post('/edit-tweet', async (req, res) => {
     try {
         // Check whether this tweet actually belongs to the user
         const tweet = new Tweets({title, bodyText, tweetId});
-        const tweetData = tweet.getTweetDatafromTweetId();
+        const tweetData = await tweet.getTweetDatafromTweetId();
 
-        if(userId !== tweetData.userId) {
+        if(userId.toString() !== tweetData.userId.toString()) {
             return res.send({
                 status: 400,
                 message: "Edit not allowed. Tweet is owned by some other user."
@@ -174,6 +188,46 @@ tweetsRouter.post('/edit-tweet', async (req, res) => {
             status: 401,
             message: "Internal Error",
             error: err  
+        })
+    }
+
+})
+
+tweetsRouter.post('/delete-tweet', isAuth, async (req, res) => {
+
+    const { tweetId } = req.body;
+    const { userId } = req.session.user;
+
+    if(!tweetId) {
+        return res.send({
+            status: 500,
+            message: "Parameters Missing"
+        })
+    }
+
+    try {
+        const tweet = new Tweets({tweetId});
+        const tweetData = await tweet.getTweetDatafromTweetId();
+
+        if(userId.toString() !== tweetData.userId.toString()) {
+            return res.send({
+                status: 400,
+                message: "Delete not allowed. Tweet is owned by some other user."
+            })
+        }
+
+        const tweetDb = await tweet.deleteTweet();
+        return res.send({
+            status: 200,
+            message: "Delete Successful",
+            data: tweetDb
+        })
+    }
+    catch(err) {
+        return res.send({
+            status: 400,
+            message: "Internal Error",
+            error: err
         })
     }
 
