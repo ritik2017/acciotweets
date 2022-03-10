@@ -10,7 +10,7 @@ function followUser({followerUserId, followingUserId}) {
             const followObj = await FollowSchema.findOne({followerUserId, followingUserId});
 
             if(followObj) {
-                reject("User already followed");
+                return reject("User already followed");
             }
 
             const creationDatetime = new Date();
@@ -22,10 +22,10 @@ function followUser({followerUserId, followingUserId}) {
             })
 
             const followDb = await follow.save();
-            resolve(followDb);
+            return resolve(followDb);
         }
         catch(err) {
-            reject(err);
+            return reject(err);
         }
 
     })
@@ -35,12 +35,11 @@ function followingUserList({followerUserId, offset}) {
     return new Promise( async (resolve, reject) => {
 
         try {
-
             const followDb = await FollowSchema.aggregate([
-                { $match: { followerUserId } },
+                { $match: { followerUserId: ObjectId(followerUserId) } },
                 { $sort:  { creationDatetime: -1 } },
                 { $project: { followingUserId: 1 } },
-                { $facet: { data: [ {$skip: offset}, { $limit: constants.FOLLOWLIMIT } ]} }
+                { $facet: { data: [ {"$skip": parseInt(offset)}, { "$limit": constants.FOLLOWLIMIT } ]} }
             ])
 
             const followingUserIds = [];
@@ -68,10 +67,65 @@ function followingUserList({followerUserId, offset}) {
     })
 }
 
-// 1. id api
-// 2. 
 
-module.exports = { followUser, followingUserList };
+function followerUserList({followingUserId, offset}) {
+    return new Promise( async (resolve, reject) => {
 
-// Aniket -> Shubham
-// FollowerUser -> FollowingUser
+        try {
+
+            const followDb = await FollowSchema.aggregate([
+                { $match: { followingUserId: ObjectId(followingUserId) } },
+                { $sort:  { creationDatetime: -1 } },
+                { $project: { followerUserId: 1 } },
+                { $facet: { data: [ {"$skip": parseInt(offset)}, { "$limit": constants.FOLLOWLIMIT } ]} }
+            ])
+
+            const followerUserIds = [];
+            followDb[0].data.forEach((item) => {
+                followerUserIds.push(ObjectId(item.followerUserId));
+            })
+
+            // ["6ubsjf", "6sybjf", "6usbjs"]
+
+            // await UserSchema.find({_id: {$in: followingUserIds}})
+            const followerUserDetails =  await UserSchema.aggregate([
+                { $match: { _id: {$in: followerUserIds} }},
+                { $project: {
+                    username: 1,
+                    name: 1,
+                    _id: 1
+                } }
+            ])
+
+            resolve(followerUserDetails);
+        }
+        catch(err) {
+            reject(err);
+        }
+    })
+}
+
+function unfollowUser({followingUserId, followerUserId}) {
+    return new Promise(async (resolve, reject) => {
+
+        try {
+            const followDb = await FollowSchema.findOneAndDelete({followerUserId, followingUserId});
+
+            // FollowingUserId does not belong to any user
+            // User is not followed
+            
+            if(!followDb) {
+                return reject("User not followed");
+            }
+
+            return resolve(followDb);
+        }
+        catch(err) {
+            return reject(err);
+        }
+
+    })
+}
+
+
+module.exports = { followUser, followingUserList, followerUserList, unfollowUser };

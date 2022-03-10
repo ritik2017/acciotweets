@@ -1,5 +1,6 @@
-const UserSchema = require('../Schemas/User');
 const bcrypt = require('bcrypt');
+
+const UserSchema = require('../Schemas/User');
 
 class User {
     
@@ -39,7 +40,7 @@ class User {
         })
     }
 
-    static verifyUserIdExists({userId}) {
+    static verifyUserIdExists(userId) {
         return new Promise(async (resolve, reject) => {
             try {
                 const userDb = await UserSchema.findOne({_id: userId});
