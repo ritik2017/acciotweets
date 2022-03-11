@@ -86,11 +86,12 @@ class Tweets {
         })
     }
 
-    static getTweets(offset) {
+    static getTweets(offset, followingUserIds) {
         return new Promise(async (resolve, reject) => {
             try {
                 const dbTweets = await TweetsSchema.aggregate([
                     // sort, pagination
+                    { $match: { userId: { $in: followingUserIds } } },
                     { $sort: {"creationDatetime": -1} },
                     { $facet: {
                         data: [

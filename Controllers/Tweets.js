@@ -3,6 +3,7 @@ const tweetsRouter = express.Router();
 
 const Tweets = require('../Models/Tweets');
 const { isAuth } = require('../Utils/Auth');
+const { getFeedFollowingList } = require('../Utils/Tweet'); 
 
 tweetsRouter.post('/create-tweet',isAuth, async (req, res) => {
 
@@ -62,9 +63,12 @@ tweetsRouter.post('/create-tweet',isAuth, async (req, res) => {
 tweetsRouter.get('/get-tweets', async (req, res) => {
 
     const offset = req.query.offset || 0;
+    const userId = req.session.user.userId;
 
     try {
-        const dbTweets = await Tweets.getTweets(offset);
+        const followingUserIds = await getFeedFollowingList(userId);
+
+        const dbTweets = await Tweets.getTweets(offset, followingUserIds);
 
         return res.send({
             status: 200,

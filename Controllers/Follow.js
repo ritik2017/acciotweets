@@ -4,6 +4,7 @@ const FollowRouter = express.Router();
 const { validateMongoDbUserID } = require('../Utils/Follow');
 const User = require('../Models/User');
 const { followUser, followingUserList, followerUserList, unfollowUser } = require('../Models/Follow');
+const constants = require('../constants');
 
 FollowRouter.post('/follow-user', async (req, res) => {
 
@@ -59,7 +60,7 @@ FollowRouter.post('/follow-user', async (req, res) => {
 
 FollowRouter.get('/following-list/:userId/:offset', async (req, res) => {
 
-    const { userId, offset } = req.params;
+    const { userId, offset } = req.params || 0;
 
     if(!validateMongoDbUserID(userId)) {
         return res.send({
@@ -78,7 +79,7 @@ FollowRouter.get('/following-list/:userId/:offset', async (req, res) => {
             })
         }
 
-        const followingUserDetails = await followingUserList({followerUserId: userId, offset});
+        const followingUserDetails = await followingUserList({followerUserId: userId, offset, limit: constants.FOLLOWLIMIT});
         return res.send({
             status: 200,
             message: "Read Successful",
@@ -97,7 +98,7 @@ FollowRouter.get('/following-list/:userId/:offset', async (req, res) => {
 
 FollowRouter.get('/follower-list/:userId/:offset', async (req, res) => {
 
-    const { userId, offset } = req.params;
+    const { userId, offset } = req.params || 0;
 
     if(!validateMongoDbUserID(userId)) {
         return res.send({
@@ -116,7 +117,7 @@ FollowRouter.get('/follower-list/:userId/:offset', async (req, res) => {
             })
         }
 
-        const followerUserDetails = await followerUserList({followingUserId: userId, offset});
+        const followerUserDetails = await followerUserList({followingUserId: userId, offset, limit: constants.FOLLOWLIMIT});
         return res.send({
             status: 200,
             message: "Read Successful",
